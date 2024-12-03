@@ -31,14 +31,14 @@ const Catalog: React.FC = () => {
     }
   }, [dispatch, categories]);
 
-  // Запрос каталога
+  // Обновление каталога при изменении категории
   useEffect(() => {
     const selectedCategory = categories.find((category) => category.title === activeCategory);
     const categoryId = selectedCategory ? selectedCategory.id : 0;
 
     // Запрос каталога с параметром searchQuery
-    dispatch(fetchCatalogRequest({ categoryId, offset, searchQuery: initialSearchQuery }));
-  }, [dispatch, initialSearchQuery]);
+    dispatch(fetchCatalogRequest({ categoryId, offset, searchQuery: localSearchQuery }));
+  }, [dispatch, activeCategory]);
 
   // Обработчик клика по категории
   const handleCategoryClick = (categoryTitle: string) => {
@@ -46,21 +46,17 @@ const Catalog: React.FC = () => {
       dispatch(setActiveCategory(categoryTitle));
 
       const categoryId = categories.find((cat) => cat.title === categoryTitle)?.id ?? 0;
-      dispatch(fetchCatalogRequest({ categoryId, offset: 0, searchQuery: initialSearchQuery }));
+      dispatch(fetchCatalogRequest({ categoryId, offset: 0, searchQuery: localSearchQuery }));
     }
   };
 
   // Обработка кнопки загрузить еще
   const handleLoadMore = () => {
     if (hasMore && !loading) {
-
-      // Инкрементируем offset
       dispatch(incrementOffset());
-  
-      // Получаем обновленный offset из состояния
+
       const newOffset = offset + 6;
-  
-      // Запрашиваем новые данные с обновленным offset
+
       const categoryId = categories.find((category) => category.title === activeCategory)?.id ?? 0;
       dispatch(fetchCatalogRequest({ categoryId, offset: newOffset, searchQuery: localSearchQuery }));
     }
@@ -68,6 +64,7 @@ const Catalog: React.FC = () => {
 
   // Обработчик изменения поиска
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    
     setLocalSearchQuery(e.target.value);
   };
 
@@ -77,12 +74,17 @@ const Catalog: React.FC = () => {
 
     // Обновляем URL с поисковым запросом
     navigate(`/catalog?q=${localSearchQuery}`);
+    
+    // Обновляем каталог
+    const categoryId = categories.find((category) => category.title === activeCategory)?.id ?? 0;
+    dispatch(fetchCatalogRequest({ categoryId, offset: 0, searchQuery: localSearchQuery }));
   };
 
   // Проверка, находимся ли мы на странице каталога
   const isCatalogPage = window.location.pathname === '/catalog';
 
   useEffect(() => {
+    
     // Синхронизируем поисковое поле с параметром URL
     setLocalSearchQuery(initialSearchQuery);
   }, [location.search]);
@@ -93,7 +95,6 @@ const Catalog: React.FC = () => {
 
       {loading && offset === 0 && <Loader />}
 
-      {/* Условный рендеринг поисковой формы только на странице каталога */}
       {isCatalogPage && (
         <form className="catalog-search-form form-inline" onSubmit={handleSearchSubmit}>
           <input
@@ -105,7 +106,6 @@ const Catalog: React.FC = () => {
         </form>
       )}
 
-      {/* Отрисовка категорий 5 шт */}
       <ul className="catalog-categories nav justify-content-center">
         {categories.map((category) => (
           <li key={category.id} className="nav-item">
@@ -123,14 +123,13 @@ const Catalog: React.FC = () => {
         ))}
       </ul>
 
-      {/* Отрисовка карточек 6 шт */}
       <div className="row">
-      {items.map((item) => (
-        <Card key={item.id} item={item} />
-      ))}
-    </div>
+        {items.map((item) => (
+          <Card key={item.id} item={item} />
+        ))}
+      </div>
       {hasMore && !loading && (
-        <div className='text-center'>
+        <div className="text-center">
           <button className="btn btn-outline-primary" onClick={handleLoadMore}>
             Загрузить еще
           </button>
@@ -141,11 +140,3 @@ const Catalog: React.FC = () => {
 };
 
 export default Catalog;
-
-
-
-
-
-
-
-
